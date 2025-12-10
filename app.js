@@ -1,21 +1,42 @@
-const express = require('express');
-const path = require('path');
-const indexRouter = require('./routes/index');
+const express = require("express");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const cors = require("cors");
 
 const app = express();
-const PORT = 3000;
+app.use(cors());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
+const filePath = "data.json";
 
-// Use the router for handling routes
-app.use('/', indexRouter);
+// POST route → save JSON
+app.post("/save", (req, res) => {
+    const name = req.body.name;
+    const message = req.body.message;
 
-// Catch-all route for handling 404 errors
-app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-  });
+    // Read existing JSON or create empty
+    let data = [];
+    if (fs.existsSync(filePath)) {
+        data = JSON.parse(fs.readFileSync(filePath));
+    }
 
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+    // New record
+    const newData = {
+        name: name,
+        message: message,
+        time: new Date().toISOString()
+    };
+
+    data.push(newData);
+
+    // Save JSON
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 4));
+
+    res.send("Node.js மூலம் JSON கோப்பில் டேட்டா சேமிக்கப்பட்டது!");
+});
+
+// Server start
+app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
 });
